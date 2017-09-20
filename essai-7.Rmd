@@ -1,0 +1,331 @@
+---
+title: "Projet de fin d'année concernant l'étude sensorielle sur des différents produits "
+author: 'YahYaoui Marwa '
+date: "25 Avril 2016"
+output: 
+  html_document: 
+    highlight: textmate
+    keep_md: yes
+    theme: journal
+    toc: yes
+---
+#plan
+#I )  Résumé 
+
+On dispose du jeu de données de 8 biscuits dont 4 francais (F1,F2,F3,F4) et 4 pakistanais (P1,P2,P3,P4) . Une évaluation sensorielle a été organisée pour caractériser ces produit par des juges. Les notes des juges varient entre 0 et 10, désignant la saveur du produit.
+
+
+
+
+#II )  Exploration des données:
+  
+ * La base comporte :
+  
+  - 192 observations : représentant les différentes notes attribuées par les juges pour chaque produit et dans chaque séance.
+
+  - 26 variables : dont 2 variables (séance et juge) qui sont quantitatives et qu'on va les convertir en qualitatives, 1 variable représentant les produits qu'on va étudier et finalement 23 descripteurs sensorielles.
+
+ 
+```{r}
+data=read.table(file.choose(), sep=";", header=TRUE)
+View(data)
+data$juge=as.factor(data$juge)
+data$seance=as.factor(data$seance)
+
+```
+
+#III )  Etude statistiques:
+
+
+##1- Statistiques descriptives + Interprétations :
+ 
+  * Pour faire l'étude descriptive, on utilise "summary" pour déterminer le min, le max, la médiane, la moyenne, les quartiles et finalement le nombre des valeurs manquants.
+ 
+```{r}
+summary(data)
+```
+ 
+  * Pour les séances de dégustation, il existe 2 séances et on a 12 juges et 8 produits. Donc tout simplement chaque juge a dégusté 2 fois chaque produit et les dégustations des produits diffèrent selon les juges .
+ 
+  Maintenant, on va calculer le mode de quelque variables afin de savoir l'appréciation des juges des différents descripteurs :
+ 
+    - Pour la variable "Ocitron" : le résultat de l'exécution de code nous donne "0" : Ici ce résultat nous montre que la majorité des juges n'ont pas apprécié le gout citron .
+   
+    - Pour la variable "Gsucré" : le résultat de l'exécution de code nous donne "6" : Ici ce résultat nous montre que la mojorité des juges ont apprécié le gout Gsucré .
+   
+```{r}
+names(which.max(table(data$Ocitron)))
+names(which.max(table(data$Gsucré)))
+```
+
+##2- Visualisation des différences entre juges, séances et produit:
+ 
+ 
+###2-1 Boxplot : Etude de l'effet produit, effet séance, effet juge:
+####* Effet produit:
+    
+    
+```{r,echo=FALSE,warning=FALSE}
+library(plotly)
+p1=plot_ly(data=data,x=Olait,color=produit,type="box")
+p1
+```
+    
+    - Olait: les produits ressemblent beaucoup, car ils ont tous la meme odeur du lait. Seulement, on remarque qu'il existe une différence remarquable entre les produits pakistanais P1 et P2
+
+    
+```{r,echo=FALSE,warning=FALSE}
+library(plotly)
+p2=plot_ly(data=data,x=Gsucré,color=produit,type="box")
+p2
+```
+    
+     - Gsucré: les produits francais se ressemblent beaucoup en comparant aux pakistanais. On remarque que le P3 est distingué des autres par un gout trés sucré. Il existe une différence significative entre les produits.
+
+    
+```{r,echo=FALSE,warning=FALSE}
+p3=plot_ly(data=data,x=Tfriabilité,color=produit,type="box")
+p3
+
+
+```
+      
+      - Tfriabilité: On remarque une différence énorme entre tous les produits et ils ne se ressemblent pas.
+   
+     
+     
+     
+####* Effet séance:
+   
+```{r, echo=FALSE,warning=FALSE}
+plot_ly(data=data,x=Ocaramel,color=seance,type="box")
+plot_ly(data=data,x=Tfarineux,color=seance,type="box")
+plot_ly(data=data,x=Glait,color=seance,type="box")
+```
+ 
+ Pour tous les produits, on remarque une répétabilité entre les juges d'une séance a l'autre ce qui  explique que dans des conditions identiques , on retrouve le meme résultat. Donc, l'effet séance l'emporte.
+ 
+ 
+####* Effet juge:
+    
+```{r, echo=FALSE,warning=FALSE}
+p1=plot_ly(data=data,x=Ocitron,color=juge,type="box")
+p1
+```
+  
+   - Ocitron : On remarque que la majorité des juges n'ont pas aimé le gout citron.
+   
+    
+```{r,echo=FALSE,warning=FALSE}
+p1=plot_ly(data=data,x=Tfarineux,color=juge,type="box")
+p1
+p1=plot_ly(data=data,x=Gbeurre,color=juge,type="box")
+p1
+
+```
+      
+      Sinon, pour le reste les produits, on remarque qu'il existe une différence de notes pour les produits par rapport aux juges et ceci est du à la différence de gout de chacun .
+      
+      
+##3- Résumé des données :
+ 
+ Dans cette partie, on va essayer de résumer les données afin d'obtenir un jeu de données plus détaillé.
+  
+  
+ Ici, on a essayé de construire un tableau contenant la moyenne de chaque produit selon le descripteur et finalement on a mentionné l'origine de chaque produit dans une nouvelle base de données appelé "newdata"avec laquelle on fera l'analyse des données.
+ 
+ 
+```{r}
+library(doBy)
+data2=summaryBy(.~produit,data,FUN=mean, na.rm=T, keep.names=T)
+origine=c(rep(c("France","Pakistan"),each=4))
+newdata=cbind.data.frame(data2,origine,row.names=1)
+View(newdata)
+
+```
+
+#IV )  Analyse multivariée :
+
+##1-Analyse en Composantes Principales (ACP) :
+
+
+```{r}
+library(FactoMineR)
+res.pca=PCA(newdata,quali.sup = 24)
+
+```
+
+Les variables de 1 jusqu'à 23 sont quantitatives  et la variable 24 est une variable qualitative donc par defaut ce variable ne sera pas prise en compte dans la construction des axes. Par défaut, les variables sont centrées réduites.
+
+###* Les valeurs propres : 
+On constate qu'uniquement les 2 premières valeurs propres sont très grandes .Donc ,on va choisir les 2 premiers axes et il suffit de projeter les observations sur ces 2 axes pour obtenir le maximum de l'information disponible.
+
+
+###* Interprétations :
+
+Dans l'ensemble, le premier axe représente trois dégradations selon la sensation:
+
+  - Dégradation du gout: gout sucré ( à gauche du cercle par exemple le P3 ) au gout salé (à droite du cercle par exemple F3 ).
+ 
+  - Dégradation d'odeur: gout sucré ( à gauche du cercle par exemple Ovanille et Ocaramel ) au gout salé ( à droite du cercle citant l'exemple du Ooeuf).
+ 
+  - Dégradation du toucher: toucher solide ( à gauche comme Tcraqcroust) au toucher moelleux ( à droite comme Tfarineux).
+ 
+Et pour l'axe 2, il représente la dégradation d'acidité pour le gout et l'odeur : c'est moins acide du bas vers le haut ( P2 est le plus acide de tous les produits ) .
+
+Selon le cercle de corrélation , on déduit que les variables sont bien représentées .La première composante résume 37.06 % de l'inertie totale alors que la deuxieme présente 21.34 % de la contibuton totale. 
+
+###* Corrélation entre les variables:
+
+la variable Tcraqcroust est corrélée négativement avec la variable Tpateux car un produit qui est pateux ne peut pas etre croustillant à la fois. On remarque aussi que les 2 variables Gcitron et Ocitron sont très bien corrélés entre eux ( angle entre eux = 0 ) donc un produit qui a le gout acide a nécessairement l'odeur acide . En revanche, les variables Goeuf et Gvanille ne sont pas corrélés entre eux ( ils forment un angle de 90°) car un produit ne peut pas avoir à la fois le gout salé et le gout sucré
+
+
+Ces interprétations peuvent etre affinés a l'aide des résultats numériques. 
+
+
+
+###* Présentations des graphiques:
+
+
+```{r,echo=FALSE}
+library(ggplot2)
+library(grid)
+library(factoextra)
+
+p1=fviz_pca_ind(res.pca,geom=c("point","text"),col.ind="cos2")+scale_color_gradient2(low='blue',mid='white',high='red',midpoint=0.5)
+
+p2=fviz_pca_var(res.pca, geom=c("point","text"),col.var="cos2")
+
+p3=fviz_screeplot(res.pca)
+
+p4=fviz_pca_ind(res.pca,habillage=24,label=T,addEllipses=T)
+
+p5=fviz_pca_biplot(res.pca,col.var="cos2")
+
+library(gridExtra)
+grid.arrange(p1,p2,p3,p4,p5,ncol=2,nrow=3)
+
+```
+ 
+ 
+ Dans cette partie, on va utilisé "fviz" pour donner les Graphiques des individus ou variables issues des résultats de l'Analyse en Composantes Principale.
+
+En utilisant le " cos carré " qui mesure la qualité de projection des individus ou variables sur les axes et permettent d'interpréter les proximités entre les individus (les variables) .
+
+Prenons l'exemple de P2 pour les individus (coloré en rouge) qui est bien représenté  (très proche de 1)  et Tfriabilité pour les variables qui est bien représenté (coloré en bleu clair) .
+
+Pour la fonction "fviz-screeeplot" , elle  décrit comment extraire et visualiser les valeurs propres et variances des dimensions à partir des résultats. 
+
+Aussi, il est possible de construire des ellipses de confiance autour des modalités d'une variable qualitative  (origine)  en utilisant "habillage". Ces ellipses donnent alors des régions de confiance sur la position de chacune des modalités.
+
+Pour la fonction "fviz_pca_biplot" , elle permet de donner le biplot des individus et des variables de l'ACP.
+ 
+ 
+##2- Présentation de graphiques dynamiques :
+  
+ IcI, on a utilisé la librarie "GoogleVis" en référençant à "Google Visualisation API" pour avoir des graphiques dynamiques résumant le jeu de données.
+ 
+[plot1](http://127.0.0.1:22709/custom/googleVis/BarChartID12ac702fa9c.html)
+[plot2](http://127.0.0.1:22709/custom/googleVis/BubbleChartID12ac14e02e00.html)
+  
+```{r,echo=FALSE,warning=FALSE}
+library(googleVis)
+attach(newdata)
+
+plot1=gvisBarChart(data2,yvar=c("Vcouleur","Gcitron"))
+plot(plot1)
+
+
+
+plot2=gvisBubbleChart(data, idvar="juge", xvar="Vcouleur", yvar="Gcitron", colorvar = "produit", sizevar = "seance", options=list( {hAxis='{minValue:1,maxValue:10}'},width=1200 , height=800))
+plot(plot2)
+
+
+
+```
+
+
+#V )  Cartographie interne des préferences :
+
+##1 - Concaténation des deux bases:
+   
+ Dans cette partie, on va concaténer avec la première base, une deuxième base contenant les préférences des consommateurs.
+ 
+ Dans cette dernière, on dipose d'une base contenant :
+ 
+     - 8 observations qui présentent les produits pakistanais et francais.
+   
+     - 294 variables dont tous sont quantitatives et qui présentent les notes attribués par chaque consommateur 150 consommateurs francais et 144 consommateurs pakistanais pour chaque produit.
+
+Finalement, on aura trois bases finales sur quoi on fera l'ACP :
+     - Une base contenant les préférences des consommateurs francais et pakistanais et les descripteurs sensorielles ( 8 observations et 317 variables ) .
+     
+     - Une base contenant les préferences des consommateurs francais et les descripteurs sensorielles ( 8 observations et 173 variables).
+   
+     - Une base contenant les préferences des consommateurs pakistanais et les descripteurs sensorielles ( 8 observations et 167 variables).
+   
+```{r, echo=FALSE}
+data1=read.table(file.choose(), sep=";", header=T, row.names = 1)
+rownames(newdata)=rownames(data1)
+newdata=newdata[,-c(24)]
+new=cbind(data1,newdata)
+
+datafrancais=data1[,1:150]
+newfrancais=cbind(datafrancais,newdata)
+View(newfrancais)
+
+
+datapakistanais=data1[,151:294]
+newpakistanais=cbind(datapakistanais,newdata)
+View(newpakistanais)
+
+```
+  
+##2- Analyse en Composantes Principales : 
+
+```{r,echo=FALSE}
+library(FactoMineR)
+res.pca=PCA(new,quanti.sup = 294:317)
+
+library(ggplot2)
+library(grid)
+library(factoextra)
+
+p3=fviz_pca_var(res.pca,invisible="var")
+plot(p3)
+
+
+```
+
+Dans cette partie d'ACP sur la base finale, on a choisi les descripteurs sensorielles comme étant les variables quantitatives supplémentaires.
+  
+###* Les valeurs propres:
+On constate qu'uniquement les 2 premières valeurs propres sont très grandes ; 67.08 sur la première composante et 54.04 sur la deuxième .Donc ,on va choisir les 2 premiers axes et il suffit de projeter les observations sur ces 2 axes pour obtenir le maximum de l'information disponible.  
+  
+###* Interprétations:
+  
+Selon le cercle de corrélation , on déduit que les variables ne sont pas très bien représentées .La premiere composante résume 22.8 % de l'inertie totale alors que la deuxieme présente 18.4 % de la contibuton totale.
+
+###* Corrélation entre les variables:
+
+la variable Gcitron est corrélée négativement avec la variable Gbeurre car un produit qui est fortement acide ne peut pas etre  à la fois basique . On remarque aussi que les 2 variables Tfarineux et Tfriabilité sont très bien corrélés entre eux ( angle entre eux = 0 ) donc un produit qui a le toucher poudreux comme la farine, est nécessairement friable . En revanche, les variables Ooeuf et Ocitron ne sont pas corrélés entre eux ( ils forment un angle de 90°)  car un produit ne peut pas avoir à la fois l'odeur des oeufs et l'odeur du citron.
+
+D'après la figure de Individuals facto map, on remarque un petit regroupement des produits selon l'origine ( les produits pakistanais sont situés sur la partie droite inférieure contrairement aux produits francais) . Prenons l'exemple du produit pakistanais "Palet Breton" qui est caractérisé par l'odeur et le gout des oeufs. Contrairement au produit francais "Candi lite" qui a un gout et une odeur caramélisés . Finalement, pour le produit francais "Gala" , on remarque qu'il a le toucher fondant et non pas solide.
+
+
+
+Finalement, pour les préférences de chacun des consommateurs, on remarque que :
+
+
+```{r,echo=FALSE}
+res.pca1=PCA(newfrancais,quanti.sup=151:173)
+
+```
+
+   - Pour les francais: on remarque que les consommateurs francais se regroupent sur la partie droite du cercle ce qui explique leur préferences généralement pour les produits pas trop sucrés et précisément les produits pakistanais comme "Spirits", "Petit brun" et "Palet breton".
+
+```{r,echo=FALSE}
+res.pca1=PCA(newpakistanais,quanti.sup=145:167)
+```
+   
+   - Pour les pakistanais: on remarque que les consommateurs pakistanais sont répartis sur toute la cercle pratiquement et surtout  à droite et en haut du cercle ce qui explique leur préférences pour les produits ayant le gout salé et surtout les produits au toucher poudreux et précisément les produits francais comme "Sooper", "Gala" et "Milco".
